@@ -20,11 +20,13 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node }}
-      # Until @snappedcut/sdk is on npm, take it from its own repo. package.json
-      # keeps the real `^0.1.0` range — only this checkout is redirected — so the
-      # published tarball is never wrong. Delete this step after the SDK release.
+      # Until @snappedcut/sdk is on npm, take it from its own repo. An `overrides`
+      # entry is refused as conflicting with the direct dependency, so this edits
+      # the dependency itself — in this checkout only. The committed package.json
+      # keeps the real `^0.1.0`, and the release workflow does NOT do this, so a
+      # published tarball can never carry a git dependency. Delete after release.
       - name: Resolve the SDK from its repo
-        run: npm pkg set "overrides.@snappedcut/sdk=github:snappedcut-dev/sdk"
+        run: npm pkg set "dependencies.@snappedcut/sdk=github:snappedcut-dev/sdk"
       - run: npm install --no-audit --no-fund
       - run: npm run typecheck --if-present
       - run: npm test

@@ -23,11 +23,6 @@ jobs:
         with:
           node-version: '22'
           registry-url: https://registry.npmjs.org
-      # Until @snappedcut/sdk is on npm, take it from its own repo. package.json
-      # keeps the real `^0.1.0` range — only this checkout is redirected — so the
-      # published tarball is never wrong. Delete this step after the SDK release.
-      - name: Resolve the SDK from its repo
-        run: npm pkg set "overrides.@snappedcut/sdk=github:snappedcut-dev/sdk"
       - run: npm install --no-audit --no-fund
       - run: npm run typecheck --if-present
       - run: npm test
