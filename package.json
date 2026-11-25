@@ -1,6 +1,6 @@
 {
   "name": "@snappedcut/mcp",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "MCP server exposing the Snapped Cut cloud render API to Claude and other MCP clients.",
   "license": "MIT",
   "type": "module",
@@ -38,7 +38,7 @@
     "test": "node --test test/*.test.mjs"
   },
   "dependencies": {
-    "@snappedcut/sdk": "^0.1.0"
+    "@snappedcut/sdk": "^0.2.0"
   },
   "publishConfig": {
     "access": "public",

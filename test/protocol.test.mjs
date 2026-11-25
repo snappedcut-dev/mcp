@@ -50,3 +50,36 @@ test('a tool failure comes back as a readable result, not a dead turn', async ()
 test('an unknown method is a JSON-RPC method-not-found', async () => {
   await assert.rejects(() => handle({ method: 'nope' }, deps), (e) => e.code === -32601);
 });
+
+test('run_tool uploads local inputs first, and passes asset ids through', async () => {
+  const uploads = [];
+  const created = [];
+  const client = {
+    upload: async (bytes, options) => { uploads.push(options); return { id: 'ast_uploaded000000000' }; },
+    create: async (request) => { created.push(request); return { job: { id: 'job_t' }, charged: 0 }; },
+  };
+  const r = await call(
+    'run_tool',
+    { tool: 'compress-video', inputs: ['/tmp/a.mp4', 'ast_already000000000'], params: { quality: 'small' } },
+    { snapcut: () => client, readFile: async () => new Uint8Array(4) },
+  );
+  assert.deepEqual(uploads, [{ name: 'a.mp4', contentType: 'video/mp4' }]);
+  assert.deepEqual(created, [{ kind: 'tool', tool: 'compress-video', inputs: ['ast_uploaded000000000', 'ast_already000000000'], params: { quality: 'small' } }]);
+  assert.match(r.content[0].text, /job_t/);
+});
+
+test('render_design sends its idempotency key as an option, not in the body', async () => {
+  const seen = [];
+  const client = { create: async (...a) => { seen.push(a); return { job: { id: 'job_d' }, charged: 4 }; } };
+  await call('render_design', { design: { clips: [] }, idempotencyKey: 'k1', outputs: [{ preset: 'square' }] }, { snapcut: () => client });
+  assert.deepEqual(seen, [[{ design: { clips: [] }, outputs: [{ preset: 'square' }] }, { idempotencyKey: 'k1' }]]);
+});
+
+test('a cloud tool with no key says how to get one', async () => {
+  const r = await handle(
+    { method: 'tools/call', params: { name: 'list_operations', arguments: {} } },
+    { snapcut: () => { throw new Error('No key. Set SNAPCUT_KEY — a cloud render spends credits.'); } },
+  );
+  assert.equal(r.isError, true);
+  assert.match(r.content[0].text, /SNAPCUT_KEY/);
+});
